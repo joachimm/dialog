@@ -8,46 +8,10 @@
 #import "../Utilities/TextMate.h" // -insertSnippetWithOptions
 #import "../../TMDCommand.h" // -writeString:
 #import "../../Dialog2.h"
+#import "MenuWindowView.h"
 
-@interface NSTableView (MovingSelectedRow)
-- (BOOL)TMDcanHandleEvent:(NSEvent*)anEvent;
-@end
 
-@implementation NSTableView (MovingSelectedRow)
-- (BOOL)TMDcanHandleEvent:(NSEvent*)anEvent
-{
-	int visibleRows = (int)floorf(NSHeight([self visibleRect]) / ([self rowHeight]+[self intercellSpacing].height)) - 1;
-	struct { unichar key; int rows; } const key_movements[] =
-	{
-		{ NSUpArrowFunctionKey,              -1 },
-		{ NSDownArrowFunctionKey,            +1 },
-		{ NSPageUpFunctionKey,     -visibleRows },
-		{ NSPageDownFunctionKey,   +visibleRows },
-		{ NSHomeFunctionKey,    -(INT_MAX >> 1) },
-		{ NSEndFunctionKey,     +(INT_MAX >> 1) },
-	};
 
-	unichar keyCode = 0;
-	if([anEvent type] == NSScrollWheel)
-		keyCode = [anEvent deltaY] >= 0.0 ? NSUpArrowFunctionKey : NSDownArrowFunctionKey;
-	else if([anEvent type] == NSKeyDown && [[anEvent characters] length] == 1)
-		keyCode = [[anEvent characters] characterAtIndex:0];
-
-	for(size_t i = 0; i < sizeofA(key_movements); ++i)
-	{
-		if(keyCode == key_movements[i].key)
-		{
-			int row = std::max(0, std::min([self selectedRow] + key_movements[i].rows, [self numberOfRows]-1));
-			[self selectRow:row byExtendingSelection:NO];
-			[self scrollRowToVisible:row];
-
-			return YES;
-		}
-	}
-
-	return NO;
-}
-@end
 
 @interface TMDIncrementalPopUpMenu (Private)
 - (NSRect)rectOfMainScreen;
@@ -69,7 +33,7 @@ NSString* const DISPLAY = @"display";
 // =============================
 - (id)init
 {
-	if(self = [super initWithContentRect:NSMakeRect(0, 0, 1, 1) styleMask:NSBorderlessWindowMask backing:NSBackingStoreBuffered defer:NO])
+	if(self = [super initWithContentRect:NSZeroRect styleMask:NSBorderlessWindowMask backing:NSBackingStoreBuffered defer:NO])
 	{
 		mutablePrefix = [NSMutableString new];
 		textualInputCharacters = [[NSMutableCharacterSet alphanumericCharacterSet] retain];
@@ -121,6 +85,7 @@ NSString* const DISPLAY = @"display";
 	isAbove = NO;
 	
 	NSRect mainScreen = [self rectOfMainScreen];
+	[[self contentView] reloadData];
 	
 	int offx = (caretPos.x/mainScreen.size.width) + 1;
 	if((caretPos.x + [self frame].size.width) > (mainScreen.size.width*offx))
@@ -136,65 +101,34 @@ NSString* const DISPLAY = @"display";
 		caretPos.y = caretPos.y + ([self frame].size.height + [[NSUserDefaults standardUserDefaults] integerForKey:@"OakTextViewNormalFontSize"]*1.5);
 		isAbove = YES;
 	}
+	caretPos.x -= 25;
 	[self setFrameTopLeftPoint:caretPos];
 }
 
 - (void)setupInterface
 {
+	[self setBackgroundColor:[NSColor clearColor]];
+	[self setAlphaValue:1.0];
+	[self setOpaque:NO];
+	[self setAcceptsMouseMovedEvents:YES];
 	[self setReleasedWhenClosed:YES];
 	[self setLevel:NSStatusWindowLevel];
 	[self setHidesOnDeactivate:YES];
 	[self setHasShadow:YES];
 
-	NSScrollView* scrollView = [[[NSScrollView alloc] initWithFrame:NSZeroRect] autorelease];
-	[scrollView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-	[scrollView setAutohidesScrollers:YES];
-	[scrollView setHasVerticalScroller:YES];
-	[[scrollView verticalScroller] setControlSize:NSSmallControlSize];
-
-	theTableView = [[[NSTableView alloc] initWithFrame:NSZeroRect] autorelease];
-	[theTableView setFocusRingType:NSFocusRingTypeNone];
-	[theTableView setAllowsEmptySelection:NO];
-	[theTableView setHeaderView:nil];
-	//[theTableView setBackgroundColor:[NSColor blackColor]];
-	 
-	NSTableColumn *column = [[[NSTableColumn alloc] initWithIdentifier:@"foo"] autorelease];
-	[column setDataCell:[NSClassFromString(@"OakImageAndTextCell") new]];
-	[column setEditable:NO];
-	[theTableView addTableColumn:column];
-	[column setWidth:[theTableView bounds].size.width];
-
-	[theTableView setDataSource:self];
-	//[theTableView setDelegate:self];
-	[scrollView setDocumentView:theTableView];
-
-	[self setContentView:scrollView];
+	MenuWindowView* view = [[[MenuWindowView alloc] initWithDataSource:self] autorelease];
+	[view setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+	[view setDelegate:self];
+	[self setContentView:view];
 }
 
-//- (void)tableView:(NSTableView *)aTableView willDisplayCell:(id)aCell forTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex {
-//	[aCell setTextColor:[NSColor blueColor]];
-//}
+// =========================
+// = Menu delegate methods =
+// =========================
 
-
-// ========================
-// = TableView DataSource =
-// ========================
-
-- (int)numberOfRowsInTableView:(NSTableView *)aTableView
+- (void)viewDidChangeSelection
 {
-	return [filtered count];
 }
-
-- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(int)rowIndex
-{
-	NSImage* image = nil;
-	if(NSString* imageName = [[filtered objectAtIndex:rowIndex] objectForKey:@"image"])
-		image = [NSImage imageNamed:imageName];
-	[[aTableColumn dataCell] setImage:image];
-
-	return [[filtered objectAtIndex:rowIndex] objectForKey:@"display"];
-}
-
 // ====================
 // = Filter the items =
 // ====================
@@ -229,42 +163,9 @@ NSString* const DISPLAY = @"display";
 	{
 		newFiltered = suggestions;
 	}
-	NSPoint old = NSMakePoint([self frame].origin.x, [self frame].origin.y + [self frame].size.height);
-	
-	int displayedRows = [newFiltered count] < MAX_ROWS ? [newFiltered count] : MAX_ROWS;
-	float newHeight   = ([theTableView rowHeight] + [theTableView intercellSpacing].height) * displayedRows;
-	
-	float maxLen = 1;
-	NSString* item;
 
-	float maxWidth = [self frame].size.width;
-	if([newFiltered count]>0)
-	{
-		for(i=0; i<[newFiltered count]; i++)
-		{
-			item = [[newFiltered objectAtIndex:i] objectForKey:@"display"];
-			if([item length]>maxLen)
-				maxLen = [item length];
-		}
-		maxWidth = maxLen*18;
-		maxWidth = (maxWidth>340) ? 340 : maxWidth;
-	}
-	if(caretPos.y>=0 && (isAbove || caretPos.y<newHeight))
-	{
-		isAbove = YES;
-		old.y = caretPos.y + (newHeight + [[NSUserDefaults standardUserDefaults] integerForKey:@"OakTextViewNormalFontSize"]*1.5);
-	}
-	if(caretPos.y<0 && (isAbove || (mainScreen.size.height-newHeight)<(caretPos.y*-1)))
-	{
-		old.y = caretPos.y + (newHeight + [[NSUserDefaults standardUserDefaults] integerForKey:@"OakTextViewNormalFontSize"]*1.5);
-	}
-	
-	// newHeight is currently the new height for theTableView, but we need to resize the whole window
-	// so here we use the difference in height to find the new height for the window
-	// newHeight = [[self contentView] frame].size.height + (newHeight - [theTableView frame].size.height);
-	[self setFrame:NSMakeRect(old.x,old.y-newHeight,maxWidth,newHeight) display:YES];
 	[self setFiltered:newFiltered];
-	[theTableView reloadData];
+	[[self contentView] reloadData];
 }
 
 - (void)setFiltered:(NSArray*)array
@@ -318,7 +219,7 @@ NSString* const DISPLAY = @"display";
 			continue;
 		
 		NSEventType t = [event type];
-		if([theTableView TMDcanHandleEvent:event])
+		if([(MenuWindowView*)[self contentView] TMDcanHandleEvent:event])
 		{
 			// skip the rest
 		}
@@ -404,7 +305,7 @@ NSString* const DISPLAY = @"display";
 
 - (void)insertCommonPrefix
 {
-	int row = [theTableView selectedRow];
+	int row = [[self contentView] selectedRow];
 	if(row == -1)
 		return;
 
@@ -442,25 +343,21 @@ NSString* const DISPLAY = @"display";
 
 - (void)completeAndInsertSnippet
 {
-	if([theTableView selectedRow] == -1)
+	NSMutableDictionary* selectedItem = [[(NSMutableDictionary*)[[self contentView] selectedItem] mutableCopy] autorelease];
+	
+	if(selectedItem == nil)
 		return;
 
-	NSMutableDictionary* selectedItem = [[[filtered objectAtIndex:[theTableView selectedRow]] mutableCopy] autorelease];
-
-	NSString* candidateMatch = [selectedItem objectForKey:@"match"] ?: [selectedItem objectForKey:@"display"];
+	NSString* candidateMatch = [selectedItem objectForKey:MATCH] ?: [selectedItem objectForKey:DISPLAY];
 	if([[self filterString] length] < [candidateMatch length])
 		insert_text([candidateMatch substringFromIndex:[[self filterString] length]]);
 
-	if(outputHandle)
-	{
-		// We want to return the index of the selected item into the array which was passed in,
-		// but we can’t use the selected row index as the contents of the tablview is filtered down.
-		[selectedItem setObject:[NSNumber numberWithInt:[suggestions indexOfObject:[filtered objectAtIndex:[theTableView selectedRow]]]] forKey:@"index"];
-		[outputHandle writeString:[selectedItem description]];
-	}
-	else if(NSString* toInsert = [selectedItem objectForKey:@"insert"])
+	if(NSString* toInsert = [selectedItem objectForKey:INSERT])
 	{
 		insert_snippet(toInsert);
+	} else if(outputHandle)
+	{
+			[outputHandle writeString:[selectedItem description]];
 	}
 
 	closeMe = YES;

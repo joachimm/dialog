@@ -32,6 +32,7 @@
 		91D6F9060CF23E7F000F8170 /* menu.mm in Sources */ = {isa = PBXBuildFile; fileRef = 91D6F9040CF23E7F000F8170 /* menu.mm */; };
 		91D6F90B0CF23EAE000F8170 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 91D6F90A0CF23EAE000F8170 /* Carbon.framework */; };
 		91D6F97E0CF2C8EF000F8170 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 91D6F97D0CF2C8EF000F8170 /* WebKit.framework */; };
+		CA2725AA11BA678A000195E6 /* MenuWindowView.mm in Sources */ = {isa = PBXBuildFile; fileRef = CA2725A911BA678A000195E6 /* MenuWindowView.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -85,6 +86,8 @@
 		91D6F97D0CF2C8EF000F8170 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = /System/Library/Frameworks/WebKit.framework; sourceTree = "<absolute>"; };
 		91D6F9910CF33A7A000F8170 /* ValueTransformers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueTransformers.h; path = Commands/Utilities/ValueTransformers.h; sourceTree = "<group>"; };
 		91D6F9920CF33A7A000F8170 /* ValueTransformers.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = ValueTransformers.mm; path = Commands/Utilities/ValueTransformers.mm; sourceTree = "<group>"; };
+		CA2725A811BA678A000195E6 /* MenuWindowView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MenuWindowView.h; path = "../textmate-dialog/Commands/popup/MenuWindowView.h"; sourceTree = SOURCE_ROOT; };
+		CA2725A911BA678A000195E6 /* MenuWindowView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = MenuWindowView.mm; path = "../textmate-dialog/Commands/popup/MenuWindowView.mm"; sourceTree = SOURCE_ROOT; };
 		D2F7E65807B2D6F200F64583 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
@@ -183,6 +186,8 @@
 		172138980FB6D338001D3EAA /* popup */ = {
 			isa = PBXGroup;
 			children = (
+				CA2725A811BA678A000195E6 /* MenuWindowView.h */,
+				CA2725A911BA678A000195E6 /* MenuWindowView.mm */,
 				172138950FB6D334001D3EAA /* TMDIncrementalPopUpMenu.mm */,
 				172138940FB6D334001D3EAA /* TMDIncrementalPopUpMenu.h */,
 				172138930FB6D334001D3EAA /* popup.mm */,
@@ -378,6 +383,7 @@
 				1721389D0FB6D359001D3EAA /* tooltip.mm in Sources */,
 				172138B10FB6D540001D3EAA /* nib.mm in Sources */,
 				172138B20FB6D540001D3EAA /* TMDNibController.mm in Sources */,
+				CA2725AA11BA678A000195E6 /* MenuWindowView.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
