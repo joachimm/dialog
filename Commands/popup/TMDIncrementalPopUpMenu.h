@@ -16,7 +16,6 @@
 	NSMutableString* mutablePrefix;
 	NSString* staticPrefix;
 	NSArray* filtered;
-	NSTableView* theTableView;
 	NSPoint caretPos;
 	BOOL isAbove;
 	BOOL closeMe;
