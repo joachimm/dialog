@@ -56,7 +56,12 @@
 - (void)filter;
 - (void)insertCommonPrefix;
 - (void)completeAndInsertSnippet;
+- (void)setFiltered:(NSArray*)array;
 @end
+
+NSString* const INSERT = @"insert";
+NSString* const MATCH = @"match";
+NSString* const DISPLAY = @"display";
 
 @implementation TMDIncrementalPopUpMenu
 // =============================
@@ -258,11 +263,16 @@
 	// so here we use the difference in height to find the new height for the window
 	// newHeight = [[self contentView] frame].size.height + (newHeight - [theTableView frame].size.height);
 	[self setFrame:NSMakeRect(old.x,old.y-newHeight,maxWidth,newHeight) display:YES];
-	[filtered release];
-	filtered = [newFiltered retain];
+	[self setFiltered:newFiltered];
 	[theTableView reloadData];
 }
 
+- (void)setFiltered:(NSArray*)array
+{
+	id oldThing = filtered;
+	filtered = [array retain];
+	[oldThing release];
+}
 // =========================
 // = Convenience functions =
 // =========================
@@ -399,7 +409,7 @@
 		return;
 
 	id cur = [filtered objectAtIndex:row];
-	NSString* curMatch = [cur objectForKey:@"match"] ?: [cur objectForKey:@"display"];
+	NSString* curMatch = [cur objectForKey:MATCH] ?: [cur objectForKey:DISPLAY];
 	if([[self filterString] length] + 1 < [curMatch length])
 	{
 		NSString* prefix = [curMatch substringToIndex:[[self filterString] length] + 1];
@@ -407,7 +417,7 @@
 		for(int i = row; i < [filtered count]; ++i)
 		{
 			id candidate = [filtered objectAtIndex:i];
-			NSString* candidateMatch = [candidate objectForKey:@"match"] ?: [candidate objectForKey:@"display"];
+			NSString* candidateMatch = [candidate objectForKey:MATCH] ?: [candidate objectForKey:DISPLAY];
 			if([candidateMatch hasPrefix:prefix])
 				[candidates addObject:candidateMatch];
 		}
