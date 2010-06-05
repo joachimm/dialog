@@ -9,6 +9,7 @@
 #import "../../TMDCommand.h" // -writeString:
 #import "../../Dialog2.h"
 #import "MenuWindowView.h"
+#import "Fallback.h"
 
 
 
@@ -21,9 +22,15 @@
 - (void)insertCommonPrefix;
 - (void)completeAndInsertSnippet;
 - (void)setFiltered:(NSArray*)array;
+- (void)handleReceivedString;
+- (void)displayDocumentationPopup:(NSString*)html;
+-(void)closeDocumentationPopup;
 @end
 
+NSString* const DOCUMENTATION = @"documentation";
 NSString* const INSERT = @"insert";
+NSString* const FALLBACK = @"fallback";
+NSString* const INDEX = @"index";
 NSString* const MATCH = @"match";
 NSString* const DISPLAY = @"display";
 
@@ -39,6 +46,8 @@ NSString* const DISPLAY = @"display";
 		textualInputCharacters = [[NSMutableCharacterSet alphanumericCharacterSet] retain];
 		caseSensitive = YES;
 
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleItemChange:) name:TMDItemChangedNotification object:nil];
+		
 		[self setupInterface];	
 	}
 	return self;
@@ -55,6 +64,8 @@ NSString* const DISPLAY = @"display";
 
 	[filtered release];
 
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
+	
 	[super dealloc];
 }
 
@@ -63,7 +74,13 @@ NSString* const DISPLAY = @"display";
 	if(self = [self init])
 	{
 		suggestions = [someSuggestions retain];
-
+		int i = 0;
+		NSEnumerator* enumerator = [someSuggestions objectEnumerator];
+		NSMutableDictionary* item;
+		while ((item = [enumerator nextObject])) {
+			[item setObject:[NSNumber numberWithInt:i] forKey:INDEX];
+			i++;
+		}
 		if(aUserString)
 			[mutablePrefix appendString:aUserString];
 
@@ -128,7 +145,61 @@ NSString* const DISPLAY = @"display";
 
 - (void)viewDidChangeSelection
 {
+	NSMutableDictionary* selectedItem = (NSMutableDictionary*)[[self contentView] selectedItem];
+	
+	if(selectedItem == nil)
+		return;
+	// unless we have an input handle, writing on the outputHandle is pointless, 
+	// since we won't get anything in return.
+	[self closeDocumentationPopup];
+
+	  if(NSString* documentation = [selectedItem objectForKey:DOCUMENTATION]){
+	      [self displayDocumentationPopup:documentation];
+	  } else if ([selectedItem objectForKey:FALLBACK]) {
+		  [Fallback startLookupForItem:selectedItem];
+	  }
+
 }
+
+// ================================
+// = Documentation Popup handling =
+// ================================
+
+-(void)closeDocumentationPopup
+{
+	if(htmlTooltip != nil){
+		[htmlTooltip close];
+		htmlTooltip = nil;
+	}	
+}
+
+- (void)displayDocumentationPopup:(NSString*)html
+{
+	[html retain];
+	NSPoint pos = caretPos;
+	pos.x = pos.x + [self frame].size.width + 5;
+	[self closeDocumentationPopup];
+	htmlTooltip = [DocPopup showWithContent:html atLocation:pos transparent: NO];
+	[html release];
+}
+
+- (void)handleItemChange:(NSNotification*)notification;
+{
+	Fallback* fallback = (Fallback*)[notification object];
+    NSMutableDictionary* dictionary = [fallback item];
+	[fallback release];
+	
+
+	if(NSString* documentation = [dictionary valueForKey:DOCUMENTATION]){
+		NSMutableDictionary* selectedItem = (NSMutableDictionary*)[[self contentView] selectedItem];
+		// if the currently selected item is the same as the received string then display the documentation
+		if(selectedItem != nil && [[dictionary objectForKey:INDEX] isEqualToNumber:[selectedItem valueForKey:INDEX]]){
+			[self displayDocumentationPopup:documentation];
+		}		
+	}	
+
+}
+
 // ====================
 // = Filter the items =
 // ====================
@@ -296,6 +367,7 @@ NSString* const DISPLAY = @"display";
 			[NSApp sendEvent:event];
 		}
 	}
+	[self closeDocumentationPopup];
 	[self close];
 }
 

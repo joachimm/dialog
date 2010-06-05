@@ -5,7 +5,8 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import "../../CLIProxy.h"
+#import "CLIProxy.h"
+#import "DocPopup.h"
 
 #define MAX_ROWS 15
 
@@ -16,6 +17,7 @@
 	NSMutableString* mutablePrefix;
 	NSString* staticPrefix;
 	NSArray* filtered;
+	DocPopup* htmlTooltip;
 	NSPoint caretPos;
 	BOOL isAbove;
 	BOOL closeMe;
