@@ -158,6 +158,13 @@ int cap (int min, int val, int max)
 	return self;
 }
 
+- (void)dealloc
+{
+	[[NSNotificationCenter defaultCenter] removeObserver:self name:NSViewFrameDidChangeNotification object:self];
+	[super dealloc];
+}
+
+
 - (BOOL)showUpArrow;
 {
 	return visibleItemsCount < [[self items] count];
