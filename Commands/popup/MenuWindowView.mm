@@ -165,14 +165,19 @@ int cap (int min, int val, int max)
 }
 
 
+- (BOOL)makePlaceForArrows;
+{
+	return visibleItemsCount < [[self items] count];// && visibleOffset > 0;
+}
+
 - (BOOL)showUpArrow;
 {
-	return visibleItemsCount < [[self items] count];
+	return visibleOffset > 0;
 }
 
 - (BOOL)showDownArrow;
-{
-	return visibleItemsCount < [[self items] count];
+{	
+	return (visibleOffset + visibleItemsCount) < [[self items] count];
 }
 
 - (float)rowHeight
@@ -216,18 +221,22 @@ int cap (int min, int val, int max)
 	NSRect frame      = [[self window] frame];
 	frame.size.width  = [self maxItemWidth] + TEXT_INDENT;
 	visibleItemsCount = std::min([[self items] count], (unsigned int)MAX_VISIBLE_ROWS);
+	visibleOffset = 0;
 	frame.size.height = visibleItemsCount * [self rowHeight];
-	if([self showUpArrow])
-		frame.size.height += [self rowHeight];
-	if([self showDownArrow])
-		frame.size.height += [self rowHeight];
+	if([self makePlaceForArrows]){
+		frame.size.height += [self rowHeight] * 2;
+	}
 	frame.origin.y += [self frame].size.height - frame.size.height;
 	[self setFrameSize:frame.size];
 	[[self window] setFrame:frame display:YES animate:NO];
 	int i = [self selectedRow];
 	if( (i < visibleOffset) || i > (visibleOffset + visibleItemsCount)){
-		selectedItem = nil;
+		[self arrangeInitialSelection];
+		NSLog(@"index=%i", i);
+	} else {
+		selectedItem = [[self items] objectAtIndex:i];
 	}
+
 	[self setNeedsDisplay:YES];
 }
 
@@ -261,20 +270,18 @@ int cap (int min, int val, int max)
 	
 	float y = [self bounds].size.height - [self rowHeight];
 	
-	if([self showUpArrow])
+	if([self makePlaceForArrows])
 	{
 		HIRect arrowBounds      = bounds;
 		arrowBounds.origin.y    = y;
 		arrowBounds.size.height = [self rowHeight];
 		HIThemeMenuItemDrawInfo aMenuItemDrawInfo;
-		aMenuItemDrawInfo.itemType = kThemeMenuItemScrollDownArrow;
+		aMenuItemDrawInfo.itemType = [self showUpArrow] ? kThemeMenuItemScrollDownArrow: kThemeMenuItemPlain;
 		aMenuItemDrawInfo.state    = kThemeMenuActive;
 		HIThemeDrawMenuItem(&arrowBounds, &arrowBounds, &aMenuItemDrawInfo, cgContext, kHIThemeOrientationNormal, NULL);
 		y -= [self rowHeight];
 	}
-	if(selectedItem == nil) {
-		selectedItem = [[self items] objectAtIndex:visibleOffset];
-	}
+
 	for(int i = visibleOffset; i < visibleOffset + visibleItemsCount; ++i)
 	{
 		NSDictionary* item = [[self items] objectAtIndex:i];
@@ -309,20 +316,19 @@ int cap (int min, int val, int max)
 		y -= [self rowHeight];
 	}
 	
-	if([self showDownArrow])
+	if([self makePlaceForArrows])
 	{
 		HIRect arrowBounds      = bounds;
 		arrowBounds.origin.y    = y;
 		arrowBounds.size.height = [self rowHeight];
 		HIThemeMenuItemDrawInfo aMenuItemDrawInfo;
-		aMenuItemDrawInfo.itemType = kThemeMenuItemScrollUpArrow;
+		aMenuItemDrawInfo.itemType = [self showDownArrow]?kThemeMenuItemScrollUpArrow:kThemeMenuItemPlain;
 		aMenuItemDrawInfo.state    = kThemeMenuActive;
 		HIThemeDrawMenuItem(&arrowBounds, &arrowBounds, &aMenuItemDrawInfo, cgContext, kHIThemeOrientationNormal, NULL);
 	}
 	
 	CGPathRelease(menuPath);
 	menuPath = NULL;
-	[self newSelectionOccured];
 	
 }
 
@@ -354,8 +360,16 @@ int cap (int min, int val, int max)
 
 - (void)arrangeInitialSelection
 {
-	selectedItem = [[self items] objectAtIndex:0];
-	[self setNeedsDisplay:YES];
+	if([[self items] count] == 0)
+	{
+		selectedItem = nil;
+	}
+	if([[self items] count]> 0)
+	{
+		selectedItem = [[self items] objectAtIndex:0];
+		[self setNeedsDisplay:YES];
+	}
+	[self newSelectionOccured];
 }
 
 // =========
@@ -372,7 +386,7 @@ int cap (int min, int val, int max)
 		int index            = ([self bounds].size.height - cursor.y) / [self rowHeight];
 		if(index < 0) return;
 		
-		if([self showUpArrow])
+		if([self makePlaceForArrows])
 		{
 			if(index == 0)
 			{
@@ -386,7 +400,7 @@ int cap (int min, int val, int max)
 		{
 			newSelectedItem = [[self items] objectAtIndex:visibleOffset + index];
 		}
-		else if([self showDownArrow])
+		else if([self makePlaceForArrows])
 		{
 			if(index == visibleItemsCount)
 			{
@@ -398,6 +412,7 @@ int cap (int min, int val, int max)
 		{
 			visibleOffset = newVisibleOffset;
 			selectedItem  = newSelectedItem;
+			[self newSelectionOccured];
 			[self setNeedsDisplay:YES];
 		}
 	}
@@ -440,6 +455,7 @@ int cap (int min, int val, int max)
 			else if(selectedIndex < visibleOffset)
 				visibleOffset = selectedIndex;
 			visibleOffset = cap(0, visibleOffset, (int)[[self items] count]-1);
+			[self newSelectionOccured];
 			[self setNeedsDisplay:YES];
 			return YES;
 		}
