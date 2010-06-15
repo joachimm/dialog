@@ -145,19 +145,19 @@ NSString* const DISPLAY = @"display";
 
 - (void)viewDidChangeSelection
 {
-	NSMutableDictionary* selectedItem = (NSMutableDictionary*)[[self contentView] selectedItem];
-	
-	if(selectedItem == nil)
-		return;
-	// unless we have an input handle, writing on the outputHandle is pointless, 
-	// since we won't get anything in return.
 	[self closeDocumentationPopup];
 
-	  if(NSString* documentation = [selectedItem objectForKey:DOCUMENTATION]){
-	      [self displayDocumentationPopup:documentation];
-	  } else if ([selectedItem objectForKey:FALLBACK]) {
-		  [Fallback startLookupForItem:selectedItem];
-	  }
+	NSMutableDictionary* selectedItem = (NSMutableDictionary*)[[self contentView] selectedItem];
+	
+	if(selectedItem == nil) {
+		return;
+	}
+
+	if(NSString* documentation = [selectedItem objectForKey:DOCUMENTATION]){
+		[self displayDocumentationPopup:documentation];
+	} else if ([selectedItem objectForKey:FALLBACK]) {
+		[Fallback startLookupForItem:selectedItem];
+	}
 
 }
 
