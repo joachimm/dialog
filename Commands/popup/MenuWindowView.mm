@@ -229,11 +229,13 @@ int cap (int min, int val, int max)
 	frame.origin.y += [self frame].size.height - frame.size.height;
 	[self setFrameSize:frame.size];
 	[[self window] setFrame:frame display:YES animate:NO];
+	
+	
 	int i = [self selectedRow];
-	if( (i < visibleOffset) || i > (visibleOffset + visibleItemsCount)){
+	if( i == NSNotFound){
 		[self arrangeInitialSelection];
-		NSLog(@"index=%i", i);
 	} else {
+		visibleOffset = cap(0, i-visibleIndex, [[self items] count] - visibleItemsCount);
 		selectedItem = [[self items] objectAtIndex:i];
 	}
 
@@ -282,6 +284,7 @@ int cap (int min, int val, int max)
 		y -= [self rowHeight];
 	}
 
+	visibleIndex = 0;
 	for(int i = visibleOffset; i < visibleOffset + visibleItemsCount; ++i)
 	{
 		NSDictionary* item = [[self items] objectAtIndex:i];
@@ -290,6 +293,10 @@ int cap (int min, int val, int max)
 		HIThemeMenuItemDrawInfo aMenuItemDrawInfo;
 		aMenuItemDrawInfo.itemType = kThemeMenuItemPlain; //  + kThemeMenuItemPopUpBackground
 		aMenuItemDrawInfo.state    = item == selectedItem ? kThemeMenuSelected : kThemeMenuActive;
+		
+		if(item == selectedItem) {
+			visibleIndex = i - visibleOffset;
+		}
 		
 		HIThemeDrawMenuItem(&hiRowRect, &hiRowRect, &aMenuItemDrawInfo, cgContext, kHIThemeOrientationNormal, NULL);
 		hiRowRect.origin.x   += TEXT_INDENT;
