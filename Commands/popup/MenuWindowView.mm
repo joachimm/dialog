@@ -244,10 +244,8 @@ int cap (int min, int val, int max)
 		// if backtrack i.e. delete chars from the filter
 		// and selection is zero
 		// don't bother keeping the position
-		// backtracking is calculated by looking if selection is farther away than it was previously
-		// this has the sideeffect that if reducing the filter doesn't move the item placement,
-		// for example if it is early in the list.
-		// then selection is kept
+		// backtracking is calculated by looking previous count of items is smaller 
+		// than current
 		int count = [[self items] count];
 		if(count > oldCount && visibleIndex == 0){
 			[self arrangeInitialSelection];
