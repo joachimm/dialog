@@ -221,7 +221,7 @@ int cap (int min, int val, int max)
 	NSRect frame      = [[self window] frame];
 	frame.size.width  = [self maxItemWidth] + TEXT_INDENT;
 	visibleItemsCount = std::min([[self items] count], (unsigned int)MAX_VISIBLE_ROWS);
-	visibleOffset = 0;
+	
 	frame.size.height = visibleItemsCount * [self rowHeight];
 	if([self makePlaceForArrows]){
 		frame.size.height += [self rowHeight] * 2;
@@ -229,18 +229,41 @@ int cap (int min, int val, int max)
 	frame.origin.y += [self frame].size.height - frame.size.height;
 	[self setFrameSize:frame.size];
 	[[self window] setFrame:frame display:YES animate:NO];
+	[self setNeedsDisplay:YES];
+}
+
+- (void)updatePositions
+{
+
 	
-	
+	// try to maintain the same selection and placement when filtering
+	int oldI = visibleOffset;	
 	int i = [self selectedRow];
 	if( i == NSNotFound){
 		[self arrangeInitialSelection];
 	} else {
+		//int oldI = visibleOffset;
 		visibleOffset = cap(0, i-visibleIndex, [[self items] count] - visibleItemsCount);
+		// if backtrack i.e. delete chars from the filter
+		// and selection is zero
+		// don't bother keeping the position
+		// backtracking is calculated by looking if selection is farther away than it was previously
+		// this has the sideeffect that if reducing the filter doesn't move the item placement,
+		// for example if it is early in the list.
+		// then selection is kept
+		/*	NSLog(@"%@ %i %i %i",[selectedItem objectForKey:@"match"], i, oldI, visibleIndex);
+		 if(i >= oldI && visibleIndex == 0){
+		 NSLog(@"arrangeInitialSelection");
+		 [self arrangeInitialSelection];
+		 } else {
+		 selectedItem = [[self items] objectAtIndex:i];
+		 }*/
+		NSLog(@">>%@ %i %i %i",[selectedItem objectForKey:@"match"], i, oldI, visibleIndex);
 		selectedItem = [[self items] objectAtIndex:i];
+		
 	}
-
-	[self setNeedsDisplay:YES];
 }
+
 
 - (NSArray*)items
 {
@@ -249,7 +272,7 @@ int cap (int min, int val, int max)
 
 - (void)drawRect:(NSRect)rect
 {		
-	
+	[self updatePositions];
 	CGContextRef cgContext = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
 	HIRect bounds          = NSRectToCGRect([self bounds]);
 	
@@ -285,6 +308,7 @@ int cap (int min, int val, int max)
 	}
 
 	visibleIndex = 0;
+	NSLog(@"%@ itemcount %i %i visibleOffset %i",selectedItem?[selectedItem objectForKey:@"match"]:nil, [[self items] count], visibleOffset + visibleItemsCount, visibleIndex);
 	for(int i = visibleOffset; i < visibleOffset + visibleItemsCount; ++i)
 	{
 		NSDictionary* item = [[self items] objectAtIndex:i];
@@ -367,12 +391,14 @@ int cap (int min, int val, int max)
 
 - (void)arrangeInitialSelection
 {
+	visibleOffset = 0;
 	if([[self items] count] == 0)
 	{
 		selectedItem = nil;
 	}
 	if([[self items] count]> 0)
 	{
+		NSLog(@"objectAtIndex---");
 		selectedItem = [[self items] objectAtIndex:0];
 		[self setNeedsDisplay:YES];
 	}
