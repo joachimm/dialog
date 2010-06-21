@@ -240,7 +240,7 @@ int cap (int min, int val, int max)
 	if( i == NSNotFound){
 		[self arrangeInitialSelection];
 	} else {
-		visibleOffset = cap(0, i-visibleIndex, [[self items] count] - visibleItemsCount);
+
 		// if backtrack i.e. delete chars from the filter
 		// and selection is zero
 		// don't bother keeping the position
@@ -248,16 +248,18 @@ int cap (int min, int val, int max)
 		// this has the sideeffect that if reducing the filter doesn't move the item placement,
 		// for example if it is early in the list.
 		// then selection is kept
-		NSLog(@"%@ found:%i count:%i old:%i index:%i",[selectedItem objectForKey:@"match"], i,[[self items] count], oldCount, visibleIndex);
 		int count = [[self items] count];
 		if(count > oldCount && visibleIndex == 0){
-		 NSLog(@"arrangeInitialSelection");
-		 [self arrangeInitialSelection];
+			[self arrangeInitialSelection];
 		} else {
-		 selectedItem = [[self items] objectAtIndex:i];
+			if(count != oldCount){
+				visibleOffset = cap(0, i-visibleIndex, [[self items] count] - visibleItemsCount);
+			}
+			selectedItem = [[self items] objectAtIndex:i];
+			[self newSelectionOccured];
 		}
 		if(oldCount != count)
-		oldCount = count;
+			oldCount = count;
 
 	}
 }
@@ -389,11 +391,12 @@ int cap (int min, int val, int max)
 - (void)arrangeInitialSelection
 {
 	visibleOffset = 0;
-	if([[self items] count] == 0)
+	int count = [[self items] count];
+	if( count == 0)
 	{
 		selectedItem = nil;
 	}
-	if([[self items] count]> 0)
+	if( count > 0)
 	{
 		selectedItem = [[self items] objectAtIndex:0];
 	}
