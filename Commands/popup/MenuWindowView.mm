@@ -222,6 +222,11 @@ int cap (int min, int val, int max)
 	NSRect frame      = [[self window] frame];
 	frame.size.width  = [self maxItemWidth] + TEXT_INDENT;
 	visibleItemsCount = std::min([[self items] count], (unsigned int)MAX_VISIBLE_ROWS);
+	// if rect is zero height drawRect->updatePosition isn't called
+	if(visibleItemsCount == 0) {
+		selectedItem = nil;
+		[self newSelectionOccured];
+	}
 	
 	frame.size.height = visibleItemsCount * [self rowHeight];
 	if([self makePlaceForArrows]){
