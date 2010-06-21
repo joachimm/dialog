@@ -153,6 +153,7 @@ int cap (int min, int val, int max)
 	
 	if(self = [self initWithFrame:NSZeroRect])
 	{
+		oldCount = 0;
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(viewFrameDidChange:) name:NSViewFrameDidChangeNotification object:self];
 	}
 	return self;
@@ -234,15 +235,11 @@ int cap (int min, int val, int max)
 
 - (void)updatePositions
 {
-
-	
 	// try to maintain the same selection and placement when filtering
-	int oldI = visibleOffset;	
 	int i = [self selectedRow];
 	if( i == NSNotFound){
 		[self arrangeInitialSelection];
 	} else {
-		//int oldI = visibleOffset;
 		visibleOffset = cap(0, i-visibleIndex, [[self items] count] - visibleItemsCount);
 		// if backtrack i.e. delete chars from the filter
 		// and selection is zero
@@ -251,16 +248,17 @@ int cap (int min, int val, int max)
 		// this has the sideeffect that if reducing the filter doesn't move the item placement,
 		// for example if it is early in the list.
 		// then selection is kept
-		/*	NSLog(@"%@ %i %i %i",[selectedItem objectForKey:@"match"], i, oldI, visibleIndex);
-		 if(i >= oldI && visibleIndex == 0){
+		NSLog(@"%@ found:%i count:%i old:%i index:%i",[selectedItem objectForKey:@"match"], i,[[self items] count], oldCount, visibleIndex);
+		int count = [[self items] count];
+		if(count > oldCount && visibleIndex == 0){
 		 NSLog(@"arrangeInitialSelection");
 		 [self arrangeInitialSelection];
-		 } else {
+		} else {
 		 selectedItem = [[self items] objectAtIndex:i];
-		 }*/
-		NSLog(@">>%@ %i %i %i",[selectedItem objectForKey:@"match"], i, oldI, visibleIndex);
-		selectedItem = [[self items] objectAtIndex:i];
-		
+		}
+		if(oldCount != count)
+		oldCount = count;
+
 	}
 }
 
@@ -308,7 +306,6 @@ int cap (int min, int val, int max)
 	}
 
 	visibleIndex = 0;
-	NSLog(@"%@ itemcount %i %i visibleOffset %i",selectedItem?[selectedItem objectForKey:@"match"]:nil, [[self items] count], visibleOffset + visibleItemsCount, visibleIndex);
 	for(int i = visibleOffset; i < visibleOffset + visibleItemsCount; ++i)
 	{
 		NSDictionary* item = [[self items] objectAtIndex:i];
@@ -398,9 +395,7 @@ int cap (int min, int val, int max)
 	}
 	if([[self items] count]> 0)
 	{
-		NSLog(@"objectAtIndex---");
 		selectedItem = [[self items] objectAtIndex:0];
-		[self setNeedsDisplay:YES];
 	}
 	[self newSelectionOccured];
 }

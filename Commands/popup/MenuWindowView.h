@@ -16,6 +16,8 @@
 	int visibleItemsCount;
 	int visibleOffset;
 	int visibleIndex;
+	
+	int oldCount;
 
 	float maxWidth;
 
