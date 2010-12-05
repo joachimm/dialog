@@ -466,7 +466,14 @@ int cap (int min, int val, int max)
 	
 	unichar keyCode = 0;
 	if([anEvent type] == NSScrollWheel)
-		keyCode = [anEvent deltaY] >= 0.0 ? NSUpArrowFunctionKey : NSDownArrowFunctionKey;
+	{
+		if([anEvent deltaY] > 0.5)
+			keyCode = NSUpArrowFunctionKey;
+		else if([anEvent deltaY] < -0.5)
+			keyCode = NSDownArrowFunctionKey;
+		else
+			return YES; // we don’t want this event to fallback to TextMate (and cause the text to scroll)
+	}
 	else if([anEvent type] == NSKeyDown && [[anEvent characters] length] == 1)
 		keyCode = [[anEvent characters] characterAtIndex:0];
 	else if([anEvent type] == NSMouseMoved)
