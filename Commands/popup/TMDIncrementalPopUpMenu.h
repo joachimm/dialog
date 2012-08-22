@@ -5,7 +5,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import "CLIProxy.h"
+#import "../../CLIProxy.h"
 #import "DocPopup.h"
 
 #define MAX_ROWS 15

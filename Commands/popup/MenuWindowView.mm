@@ -12,14 +12,14 @@
 #import <algorithm>
 
 #define TEXT_INDENT 25
-typedef float CGFloat;
+/*typedef float CGFloat;
 CGRect NSRectToCGRect(NSRect nsrect) {
 	return (*(CGRect *)&(nsrect));
 }
 NSRect NSRectFromCGRect(CGRect cgrect) {
 	return (*(NSRect *)&(cgrect));
 }
-
+*/
 int cap (int min, int val, int max)
 {
 	return std::min(max, std::max(val, min));
@@ -221,7 +221,7 @@ int cap (int min, int val, int max)
 {
 	NSRect frame      = [[self window] frame];
 	frame.size.width  = [self maxItemWidth] + TEXT_INDENT;
-	visibleItemsCount = std::min([[self items] count], (unsigned int)MAX_VISIBLE_ROWS);
+	visibleItemsCount = std::min((unsigned int)[[self items] count], (unsigned int)MAX_VISIBLE_ROWS);
 	// if rect is zero height drawRect->updatePosition isn't called
 	if(visibleItemsCount == 0) {
 		selectedItem = nil;
