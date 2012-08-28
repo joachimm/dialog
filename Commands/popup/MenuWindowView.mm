@@ -206,7 +206,7 @@ int cap (int min, int val, int max)
 			for(int i=0; i<[[self items] count]; i++)
 			{
 				NSString* text = [[[self items] objectAtIndex:i] objectForKey:@"display"];
-				float width;
+				CGFloat width;
 				HIThemeGetTextDimensions((CFStringRef)text, 600, &tinfo, &width, NULL, NULL);
 				
 				if(width > maxWidth)
@@ -241,7 +241,7 @@ int cap (int min, int val, int max)
 - (void)updatePositions
 {
 	// try to maintain the same selection and placement when filtering
-	int i = [self selectedRow];
+	NSInteger i = [self selectedRow];
 	if( i == NSNotFound){
 		[self arrangeInitialSelection];
 	} else {
@@ -365,7 +365,7 @@ int cap (int min, int val, int max)
 	
 }
 
-- (int)selectedRow {
+- (NSInteger)selectedRow {
 	return [[self items] indexOfObject:selectedItem];
 }
 // - (void)viewDidMoveToWindow
@@ -417,7 +417,7 @@ int cap (int min, int val, int max)
 	{
 		id newSelectedItem   = nil;
 		int newVisibleOffset = visibleOffset;
-		int index            = ([self bounds].size.height - cursor.y) / [self rowHeight];
+		NSInteger index            = ([self bounds].size.height - cursor.y) / [self rowHeight];
 		if(index < 0) return;
 		
 		if([self makePlaceForArrows])

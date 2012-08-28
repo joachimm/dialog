@@ -29,7 +29,7 @@
 - (id)initWithDataSource:(id)theDataSource;
 - (void)reloadData;
 - (id)selectedItem;
-- (int)selectedRow;
+- (NSInteger)selectedRow;
 - (NSArray*)items;
 - (id)delegate;
 - (void)setDelegate:(id)del;
