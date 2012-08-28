@@ -169,8 +169,9 @@ NSString* const DISPLAY = @"display";
 {
 	if(htmlTooltip != nil){
 		[htmlTooltip close];
+		//[htmlTooltip isReleasedWhenClosed] == YES
 		htmlTooltip = nil;
-	}	
+	}
 }
 
 - (void)displayDocumentationPopup:(NSString*)html
@@ -179,7 +180,7 @@ NSString* const DISPLAY = @"display";
 	NSPoint pos = caretPos;
 	pos.x = pos.x + [self frame].size.width + 5;
 	[self closeDocumentationPopup];
-	htmlTooltip = [DocPopup showWithContent:html atLocation:pos transparent: NO];
+	htmlTooltip = [[DocPopup showWithContent:html atLocation:pos transparent: NO] retain];
 	[html release];
 }
 
