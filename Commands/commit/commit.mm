@@ -109,21 +109,8 @@
 	
 		CommitWindowController* controller = [[CommitWindowController alloc] initWithArguments:arguments fileDescriptor:[proxy outputHandle]];
 		[controller showWindow:self];
-	//
-	// Done processing arguments, now add status to each item
-	// 								and choose default commit state
-	//
-		NSMutableDictionary* dict = [NSMutableDictionary dictionary];
-		
-		[dict setValue:arguments.paths forKey:@"paths"];     
-		[dict setValue:arguments.fileStatus forKey:@"status"];
-		[dict setValue:actionCommands forKey:@"action"];     
-		[dict setValue:args forKey:@"parameters"];     
 
-		//[TMDCommand writePropertyList:dict toFileHandle:[proxy outputHandle]];		
-
-		//[[proxy outputHandle] close];
-}
+	}
 - (NSString *)commandDescription
 {
 	return @"Presents a scm commit window.";
