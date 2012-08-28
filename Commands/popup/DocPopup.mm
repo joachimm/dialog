@@ -10,14 +10,6 @@
 
 
 @implementation DocPopup
-+ (id)showWithContent:(NSString*)content atLocation:(NSPoint)point transparent:(BOOL)transparent
-{
-	DocPopup* tip = [DocPopup new];
-	[tip setFrameTopLeftPoint:point];
-	[tip setContent:content transparent:transparent];
-	return tip;
-}
-
 - (id)init
 {
     if( (self = [super init]) ) {

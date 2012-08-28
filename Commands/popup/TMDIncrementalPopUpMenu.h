@@ -17,7 +17,7 @@
 	NSMutableString* mutablePrefix;
 	NSString* staticPrefix;
 	NSArray* filtered;
-	DocPopup* htmlTooltip;
+	TMDHTMLTip* htmlTooltip;
 	NSPoint caretPos;
 	BOOL isAbove;
 	BOOL closeMe;
