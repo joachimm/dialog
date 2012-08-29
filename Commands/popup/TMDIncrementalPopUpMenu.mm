@@ -169,7 +169,7 @@ NSString* const DISPLAY = @"display";
 {
 	if(htmlTooltip != nil){
 		[htmlTooltip close];
-		//[htmlTooltip isReleasedWhenClosed] == YES
+		//if(![htmlTooltip isReleasedWhenClosed] == YES) [htmlTooltip release];
 		htmlTooltip = nil;
 	}
 }
