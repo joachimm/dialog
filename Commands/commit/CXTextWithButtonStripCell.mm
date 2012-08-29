@@ -140,7 +140,7 @@
 
 - (UInt32) buttonIndexAtPoint:(NSPoint)point inRect:(NSRect)cellFrame ofView:(NSView *)controlView
 {
-	UInt32			buttonIndexHit	= NSNotFound;
+	NSInteger			buttonIndexHit	= NSNotFound;
 	unsigned int	buttonsCount	= [fButtons count];
 	
 	for( unsigned int i = 0; i < buttonsCount; i += 1 )
@@ -175,7 +175,7 @@
     for (;;)
 	{
 		NSMenu *	menu;
-		UInt32		hitButton = [self buttonIndexAtPoint:[controlView convertPoint:[theEvent locationInWindow] fromView:nil]
+		NSInteger		hitButton = [self buttonIndexAtPoint:[controlView convertPoint:[theEvent locationInWindow] fromView:nil]
 							inRect:cellFrame
 							ofView:controlView];
 		

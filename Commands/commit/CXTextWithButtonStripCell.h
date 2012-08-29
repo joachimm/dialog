@@ -17,7 +17,7 @@
 	//	• @"invocation"	-- NSInvocation -- required if this is a push button, useless for menu buttons
 	//
 	NSMutableArray *	fButtons;
-	UInt32				fButtonPressedIndex;
+	NSInteger				fButtonPressedIndex;
 	float				fButtonStripWidth;
 	BOOL				fRightToLeft;
 	
