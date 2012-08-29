@@ -68,7 +68,7 @@
 
 	enumerate(cliArguments.paths, NSString* path)
 	{
-		NSMutableDictionary *	dictionary	= [fFilesController newObject];
+		NSMutableDictionary* dictionary	= [fFilesController newObject];
 		[dictionary setObject:[path stringByAbbreviatingWithTildeInPath] forKey:@"path"];
 		[fFilesController addObject:dictionary];
 	}
@@ -82,6 +82,7 @@
 	[fDiffCommand release];
 	[fActionCommands release];
 	[fFileStatusStrings release];
+	[outputHandle release];
 	
 	[super dealloc];
 }
@@ -145,7 +146,6 @@
 	//	Diff command
 	if( fDiffCommand != nil )
 	{
-		NSMutableDictionary *	diffButtonDefinition;
 		NSMethodSignature *		diffMethodSignature	= [self methodSignatureForSelector:@selector(doubleClickRowInTable:)];
 		NSInvocation *			diffInvocation		= [NSInvocation invocationWithMethodSignature:diffMethodSignature];
 		
@@ -156,7 +156,7 @@
 		// Pretend the table view is the sender
 		[diffInvocation setArgument:&fTableView atIndex:2];
 
-		diffButtonDefinition = [NSMutableDictionary dictionary];
+		NSMutableDictionary* diffButtonDefinition = [NSMutableDictionary dictionary];
 		[diffButtonDefinition setObject:@"Diff" forKey:@"title"];
 		[diffButtonDefinition setObject:diffInvocation forKey:@"invocation"];
 
@@ -166,13 +166,10 @@
 	// Action menu
 	if(fActionCommands != nil)
 	{
-	 	NSMenu *						itemActionMenu;
-		NSMutableDictionary *			actionMenuButtonDefinition;
-
-		itemActionMenu = [[NSMenu alloc] initWithTitle:@"Test"];
+		NSMenu* itemActionMenu = [[NSMenu alloc] initWithTitle:@"Test"];
 		[itemActionMenu setDelegate:self];
 		
-		actionMenuButtonDefinition = [NSMutableDictionary dictionaryWithObject:itemActionMenu forKey:@"menu"];
+		NSMutableDictionary* actionMenuButtonDefinition = [NSMutableDictionary dictionaryWithObject:itemActionMenu forKey:@"menu"];
 		[actionMenuButtonDefinition setObject:@"Modify" forKey:@"title"];
 
 		[buttonDefinitions addObject:actionMenuButtonDefinition];
@@ -199,11 +196,10 @@
 	{
 		NSArray *	files = [fFilesController arrangedObjects];
 		int			count = MIN([files count], [fFileStatusStrings count]);
-		int			i;
 		
 		UInt32		maxCharsToDisplay = 0;
 		
-		for( i = 0; i < count; i += 1 )
+		for(int i = 0; i < count; i += 1 )
 		{
 			NSMutableDictionary *	dictionary	= [files objectAtIndex:i];
 			NSString *				status		= [fFileStatusStrings objectAtIndex:i];
@@ -241,20 +237,6 @@
 	//
 	[fOKButton setKeyEquivalent:@"\x03"];
 	[fOKButton setKeyEquivalentModifierMask:0];
-
-	//
-	// Bring the window to absolute front.
-	// -[NSWindow orderFrontRegardless] doesn't work (maybe because we're an LSUIElement).
-	//
-	
-	// Process Manager works, though!
-	{
-		ProcessSerialNumber process;
-	
-		GetCurrentProcess(&process);
-		SetFrontProcess(&process);
-	}
-	
 	
 	[self setWindow:fWindow];
 	[fWindow setLevel:NSModalPanelWindowLevel];
@@ -264,9 +246,6 @@
 	// Grow the window to fit as much of the file list onscreen as possible
 	//
 	{
-		NSScreen *		screen		= [fWindow screen];
-		NSRect			usableRect	= [screen visibleFrame];
-		NSRect			windowRect	= [fWindow frame];
 		NSTableView *	tableView	= [fPathColumn tableView];
 		float			rowHeight	= [tableView rowHeight] + [tableView intercellSpacing].height;
 		int				rowCount	= [[fFilesController arrangedObjects] count];
@@ -277,21 +256,19 @@
 		currentVisibleHeight	= [[tableView superview] frame].size.height;
 		idealVisibleHeight		= (rowHeight * rowCount) + [[tableView headerView] frame].size.height;
 		
-//		NSLog(@"current: %g ideal:%g", currentVisibleHeight, idealVisibleHeight );
 		
 		// Don't bother shrinking the window
 		if(currentVisibleHeight < idealVisibleHeight)
 		{
 			deltaVisibleHeight = (idealVisibleHeight - currentVisibleHeight);
 
-//			NSLog( @"old windowRect: %@", NSStringFromRect(windowRect) );
+			NSRect			usableRect	= [[fWindow screen] visibleFrame];
+			NSRect			windowRect	= [fWindow frame];
 
 			// reasonable margin
 			usableRect = NSInsetRect( usableRect, 20, 20 );
 			windowRect = NSIntersectionRect(usableRect, NSInsetRect(windowRect, 0, ceilf(0.5f * -deltaVisibleHeight)));
-			
-//			NSLog( @"new windowRect: %@", NSStringFromRect(windowRect) );
-			
+						
 			[fWindow setFrame:windowRect display:NO];
 		}
 	}
@@ -309,11 +286,10 @@
 	//
 	NSArray *	files = [fFilesController arrangedObjects];
 	int			count = [files count];
-	int			i;
 	
 	UInt32		maxCharsToDisplay = 0;
 	
-	for( i = 0; i < count; i += 1 )
+	for(int i = 0; i < count; i += 1 )
 	{
 		NSMutableDictionary *	dictionary	= [files objectAtIndex:i];
 		NSString *				status		= [dictionary objectForKey:@"status"];
@@ -350,43 +326,42 @@
 	{
 		// No previous summaries, no menu
 		[fPreviousSummaryPopUp setEnabled:NO];
+		return;
 	}
-	else
+	
+	NSMenu *			menu = [[NSMenu alloc] initWithTitle:@kPreviousSummariesItemTitle];
+	NSMenuItem *		item;
+
+	int	summaryCount = [summaries count];
+	int	index;
+
+	// PopUp title
+	[menu addItemWithTitle:@kPreviousSummariesItemTitle action:@selector(restoreSummary:) keyEquivalent:@""];
+	
+	// Add items in reverse-chronological order
+	for(index = (summaryCount - 1); index >= 0; index -= 1)
 	{
-		NSMenu *			menu = [[NSMenu alloc] initWithTitle:@kPreviousSummariesItemTitle];
-		NSMenuItem *		item;
-
-		int	summaryCount = [summaries count];
-		int	index;
-
-		// PopUp title
-		[menu addItemWithTitle:@kPreviousSummariesItemTitle action:@selector(restoreSummary:) keyEquivalent:@""];
+		NSString *	summary = [summaries objectAtIndex:index];
+		NSString *	itemName;
 		
-		// Add items in reverse-chronological order
-		for(index = (summaryCount - 1); index >= 0; index -= 1)
+		itemName = summary;
+		
+		// Limit length of menu item names
+		if( [itemName length] > kDisplayCharsOfSummaryInMenuItemCount )
 		{
-			NSString *	summary = [summaries objectAtIndex:index];
-			NSString *	itemName;
+			itemName = [itemName substringToIndex:kDisplayCharsOfSummaryInMenuItemCount];
 			
-			itemName = summary;
-			
-			// Limit length of menu item names
-			if( [itemName length] > kDisplayCharsOfSummaryInMenuItemCount )
-			{
-				itemName = [itemName substringToIndex:kDisplayCharsOfSummaryInMenuItemCount];
-				
-				// append ellipsis
-				itemName = [itemName stringByAppendingFormat: @"%d", 0x2026];
-			}
-
-			item = [menu addItemWithTitle:itemName action:@selector(restoreSummary:) keyEquivalent:@""];
-			[item setTarget:self];
-			
-			[item setRepresentedObject:summary];
+			// append ellipsis
+			itemName = [itemName stringByAppendingFormat: @"%d", 0x2026];
 		}
 
-		[fPreviousSummaryPopUp setMenu:menu];
+		item = [menu addItemWithTitle:itemName action:@selector(restoreSummary:) keyEquivalent:@""];
+		[item setTarget:self];
+		
+		[item setRepresentedObject:summary];
 	}
+
+	[fPreviousSummaryPopUp setMenu:menu];
 }
 
 // To make redo work, we need to add a new undo each time
@@ -413,48 +388,51 @@
 // Save, in a MRU list, the most recent commit summary
 - (void) saveSummary
 {
-	NSUserDefaults *  	defaults		= [NSUserDefaults standardUserDefaults];
 	NSString *			latestSummary	= [fCommitMessage string];
 	
 	// avoid empty string
-	if( ! [latestSummary isEqualToString:@""] )
+	if(  [latestSummary isEqualToString:@""] )
 	{
-		NSArray *			oldSummaries = [defaults arrayForKey:@kPreviousSummariesKey];
-		NSMutableArray *	newSummaries;
+		return;
+	}
+	
+	NSUserDefaults *  	defaults		= [NSUserDefaults standardUserDefaults];
+	NSArray *			oldSummaries = [defaults arrayForKey:@kPreviousSummariesKey];
+	NSMutableArray *	newSummaries;
 
-		if( oldSummaries != nil )
+	if( oldSummaries != nil )
+	{
+		unsigned int	oldIndex;
+		
+		newSummaries = [oldSummaries mutableCopy];
+		
+		// Already in the array? Move it to latest position
+		oldIndex = [newSummaries indexOfObject:latestSummary];
+		if( oldIndex != NSNotFound )
 		{
-			unsigned int	oldIndex;
-			
-			newSummaries = [oldSummaries mutableCopy];
-			
-			// Already in the array? Move it to latest position
-			oldIndex = [newSummaries indexOfObject:latestSummary];
-			if( oldIndex != NSNotFound )
-			{
-				[newSummaries exchangeObjectAtIndex:oldIndex withObjectAtIndex:[newSummaries count] - 1];
-			}
-			else
-			{
-				// Add object, remove oldest object
-				[newSummaries addObject:latestSummary];
-				if( [newSummaries count] > kMaxSavedSummariesCount )
-				{
-					[newSummaries removeObjectAtIndex:0];
-				}
-			}
+			[newSummaries exchangeObjectAtIndex:oldIndex withObjectAtIndex:[newSummaries count] - 1];
 		}
 		else
 		{
-			// First time
-			newSummaries = [NSMutableArray arrayWithObject:latestSummary];
+			// Add object, remove oldest object
+			[newSummaries addObject:latestSummary];
+			if( [newSummaries count] > kMaxSavedSummariesCount )
+			{
+				[newSummaries removeObjectAtIndex:0];
+			}
 		}
-
-		[defaults setObject:newSummaries forKey:@kPreviousSummariesKey];
-
-		// Write the defaults to disk
-		[defaults synchronize];
 	}
+	else
+	{
+		// First time
+		newSummaries = [NSMutableArray arrayWithObject:latestSummary];
+	}
+
+	[defaults setObject:newSummaries forKey:@kPreviousSummariesKey];
+
+	// Write the defaults to disk
+	[defaults synchronize];
+	
 }
 
 #if 0
@@ -468,12 +446,10 @@
 {
 	NSArray *	files = [fFilesController arrangedObjects];
 	int			count = [files count];
-	int			i;
 	
-	for( i = 0; i < count; i += 1 )
+	for(int i = 0; i < count; i += 1 )
 	{
 		NSMutableDictionary *	dictionary	= [files objectAtIndex:i];
-
 		[dictionary setObject:[NSNumber numberWithBool:chosen] forKey:@"commit"]; 
 	}
 }
@@ -482,9 +458,8 @@
 {
 	NSArray *	files = [fFilesController arrangedObjects];
 	int			count = [files count];
-	int			i;
 	
-	for( i = 0; i < count; i += 1 )
+	for(int i = 0; i < count; i += 1 )
 	{
 		NSMutableDictionary *	dictionary	= [files objectAtIndex:i];
 		
@@ -509,9 +484,8 @@
 {
 	NSArray *	files = [fFilesController arrangedObjects];
 	int			count = [files count];
-	int			i;
 	
-	for( i = 0; i < count; i += 1 )
+	for(int i = 0; i < count; i += 1 )
 	{
 		NSMutableDictionary *	dictionary	= [files objectAtIndex:i];
 		BOOL					itemChosen = YES;
